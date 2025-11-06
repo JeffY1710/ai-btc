@@ -8,4 +8,4 @@ def user_interface(PORT: int):
         html.Div(children='BTC Prediction'),
         dash_table.DataTable(data=DATAFRAME.to_dict('records'), page_size=10)
     ]
-  app.run(port=PORT)
+  app.run(host="0.0.0.0", port=PORT)

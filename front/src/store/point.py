@@ -1,0 +1,2 @@
+TIMESTAMP = 'timestamp'
+PREDICTION = 'prediction'

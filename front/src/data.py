@@ -3,7 +3,7 @@ from env import DATASET_URL
 
 DATAFRAME = pd.read_csv(DATASET_URL)
 
-DATAFRAME['Open time'] = pd.to_datetime(DATAFRAME['Open time'])
+DATAFRAME['Open time'] = pd.to_datetime(DATAFRAME['Open time']).dt.tz_localize(None)
 DATAFRAME['timestamp'] = pd.to_numeric(DATAFRAME['Open time'])
 
 DATAFRAME = DATAFRAME.sort_values(by='Open time')

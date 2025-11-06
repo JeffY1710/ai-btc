@@ -7,8 +7,9 @@ from utils import response_handler
 class BTCPrediction():
   def predict(date: datetime) -> float | None:
     date_string = str(date)
-    response = requests.get(f"{BACKEND_URL}/predict/{date_string}")
-    ok, data = response_handler(response)
+    url = f"{BACKEND_URL}/predict/{date_string}"
+
+    ok, data = response_handler("get", url)
     if not ok:
        return None
 
@@ -16,8 +17,9 @@ class BTCPrediction():
     return prediction
 
   def health_check() -> bool:
-    response = requests.get(f"{BACKEND_URL}/healthcheck")
-    ok, data = response_handler(response)
+    url = f"{BACKEND_URL}/healthcheck"
+
+    ok, data = response_handler("get", url)
     if not ok:
        return False
 

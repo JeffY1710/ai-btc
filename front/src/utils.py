@@ -1,8 +1,9 @@
 import requests
 
 # Returns a tuple, first boolean indicates request success, second is an optional dictionary. If it fails it will return (False, None)
-def response_handler(response: requests.Response) -> tuple[bool, dict | None]:
+def response_handler(method: str, url: str, **kwargs) -> tuple[bool, dict | None]:
     try:
+        response = requests.request(method=method, url=url, **kwargs)
         response.raise_for_status()
         return True, response.json()
     except requests.exceptions.HTTPError as e:

@@ -6,4 +6,4 @@ RUN pip install uv
 
 RUN uv sync
 
-CMD ["src/main.py"]
+CMD ["fastapi dev src/main.py"]

@@ -1,6 +1,23 @@
-def main():
-    print("Hello from ai-btc!")
+from fastapi import FastAPI, status
+import random
+
+app = FastAPI()
 
 
-if __name__ == "__main__":
-    main()
+@app.get("/")
+async def read_root():
+    return {"Hello": "World"}
+
+
+@app.get("/predict/{datetime}")
+async def predict(datetime: str):
+    return {"datetime": datetime, "prediction": random.random()}
+
+
+class HealthCheck():
+    status: str = "OK"
+
+
+@app.get("/healthcheck/")
+async def healthcheck():
+    return {"status": "ok"}

@@ -234,7 +234,7 @@ async def healthcheck():
         "status": "ok",
         "model_loaded": MODEL is not None,
         "data_loaded": DATAFRAME is not None,
-        "shap_initialized": SHAP_EXPLAINER is not None
+        # "shap_initialized": SHAP_EXPLAINER is not None
     }
     
     # Add SHAP info if available

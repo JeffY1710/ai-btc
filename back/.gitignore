@@ -75,3 +75,4 @@ site/
 *.iml
 .DS_Store
 Thumbs.db
+mlruns

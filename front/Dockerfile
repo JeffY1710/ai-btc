@@ -6,7 +6,7 @@ RUN pip install uv
 
 COPY .env pyproject.toml uv.lock ./
 
-RUN uv sync
+RUN ["uv", "sync"]
 
 COPY src ./src
 

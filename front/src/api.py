@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import requests
 from env import BACKEND_URL
 from utils import response_handler
@@ -6,10 +6,14 @@ from utils import response_handler
 
 class BTCPrediction():
   def predict(date: datetime) -> float | None:
-    date_string = str(date)
-    url = f"{BACKEND_URL}/predict/{date_string}"
+    date_string = date.strftime("%Y-%m-%d")
+    url = f"{BACKEND_URL}/predict/future"
 
-    ok, data = response_handler("get", url)
+    payload = {
+      "target_date": date_string
+    }
+
+    ok, data = response_handler("post", url, json=payload)
     if not ok:
        return None
 

@@ -116,7 +116,6 @@ class PredictionOutput(BaseModel):
     datetime: str
     prediction: float
     input_features: dict
-    confidence_interval: dict = None
 
 @app.get("/")
 async def read_root():

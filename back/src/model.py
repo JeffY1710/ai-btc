@@ -8,6 +8,7 @@ from datetime import datetime
 
 datetime_column = 'Open time'
 filename = 'https://raw.githubusercontent.com/JeffY1710/ai-btc/refs/heads/feature/data/data/binance_1d.csv'
+shapes_info = None
 
 def read_file_sort_date(filename: str):
     df = pd.read_csv(filename)
@@ -54,6 +55,8 @@ with mlflow.start_run():
         signature=signature,
         input_example=X.head(1)
     )
+
+    
     
     print(f"Modèle entraîné et enregistré dans MLflow Run ID: {mlflow.active_run().info.run_id}")
 
@@ -73,12 +76,9 @@ def predict_future_date(model, last_row, target_date_str):
     })
     
     pred = model.predict(features)[0]
-    conf_low = pred * 0.95
-    conf_high = pred * 1.05
     
     return {
         "target_date": target_date_str,
         "prediction": float(pred),
-        "confidence_interval": {"lower": float(conf_low), "upper": float(conf_high)},
         "based_on_date": str(last_row[datetime_column].date())
     }

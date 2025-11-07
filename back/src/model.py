@@ -1,71 +1,84 @@
 import mlflow
 import mlflow.sklearn as mlflow_sklearn
+from mlflow.models.signature import infer_signature
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error, r2_score
-import numpy as np
 import pandas as pd
+import numpy as np
+from datetime import datetime
 
 datetime_column = 'Open time'
 filename = 'https://raw.githubusercontent.com/JeffY1710/ai-btc/refs/heads/feature/data/data/binance_1d.csv'
-# DATAFRAME = pd.read_csv('https://raw.githubusercontent.com/JeffY1710/ai-btc/refs/heads/feature/data/data/binance_1d.csv')
 
 def read_file_sort_date(filename: str):
     df = pd.read_csv(filename)
     df = df.dropna()
     df[datetime_column] = pd.to_datetime(df[datetime_column])
-    return df.sort_values(by=datetime_column, ascending=False)
-
-
-def get_df_by_year(df, year):
-    return df[df[datetime_column].dt.year == year]
-
-
-def get_df_exclude_year(df, year):
-    return df[df[datetime_column].dt.year != year]
-
+    return df.sort_values(by=datetime_column, ascending=True)
 
 def add_datetime_detail(df):
-    df.loc[:, 'unixdate'] = pd.to_numeric(df[datetime_column])
-    df.loc[:, 'day'] = df[datetime_column].dt.day
-    df.loc[:, 'month'] = df[datetime_column].dt.month
-    df.loc[:, 'year'] = df[datetime_column].dt.year
-
+    df = df.copy()
+    df['day'] = df[datetime_column].dt.day
+    df['month'] = df[datetime_column].dt.month
+    df['year'] = df[datetime_column].dt.year
+    return df
 
 df = read_file_sort_date(filename)
-df_2025 = get_df_by_year(df, 2025)
-df_train = get_df_exclude_year(df, 2025)
+df = add_datetime_detail(df)
 
-add_datetime_detail(df)
-add_datetime_detail(df_2025)
-add_datetime_detail(df_train)
+print(f"✅ Données chargées : {len(df)} lignes jusqu'au {df[datetime_column].max().date()}")
 
-X_train = df_train[['Low', 'unixdate', 'Open', 'Close']]
-y_train = df_train['High']
+X = df[['Low', 'Open', 'Close', 'day', 'month', 'year']]
+y = df['High']
 
-X_test = df_2025[['Low', 'unixdate', 'Open', 'Close']]
-y_test = df_2025['High']
+rf = RandomForestRegressor(
+    n_estimators=200,
+    random_state=42,
+    max_features='sqrt',
+    n_jobs=-1
+)
 
-rf = RandomForestRegressor(n_estimators=100, random_state=0, max_features=1)
-
-# Démarre une expérience MLflow
-mlflow.set_experiment("binance_randomforest")
+mlflow.set_experiment("binance_randomforest_date_features")
 
 with mlflow.start_run():
-    rf.fit(X_train, y_train)
+    rf.fit(X, y)
+    
+    signature = infer_signature(X, rf.predict(X))
+    
+    mlflow.log_param("n_estimators", 200)
+    mlflow.log_param("max_features", "sqrt")
+    mlflow.log_param("training_rows", len(df))
+    
+    mlflow_sklearn.log_model(
+        sk_model=rf,
+        name="model",
+        signature=signature,
+        input_example=X.head(1)
+    )
+    
+    print(f"Modèle entraîné et enregistré dans MLflow Run ID: {mlflow.active_run().info.run_id}")
 
-    p_2025 = rf.predict(X_test)
-    r2 = r2_score(y_test, p_2025)
-    mse = mean_squared_error(y_test, p_2025)
-    rmse = np.sqrt(mse)
+def predict_future_date(model, last_row, target_date_str):
+    target_date = pd.to_datetime(target_date_str)
+    day = target_date.day
+    month = target_date.month
+    year = target_date.year
 
-    # Log des métriques
-    mlflow.log_metric("r2_score", r2)
-    mlflow.log_metric("mse", mse)
-    mlflow.log_metric("rmse", rmse)
-
-    # Log des paramètres
-    mlflow.log_param("n_estimators", 100)
-    mlflow.log_param("max_features", 1)
-
-    # Sauvegarde du modèle
-    mlflow_sklearn.log_model(rf, "model")
+    features = pd.DataFrame({
+        'Low': [last_row['Low']],
+        'Open': [last_row['Open']],
+        'Close': [last_row['Close']],
+        'day': [day],
+        'month': [month],
+        'year': [year]
+    })
+    
+    pred = model.predict(features)[0]
+    conf_low = pred * 0.95
+    conf_high = pred * 1.05
+    
+    return {
+        "target_date": target_date_str,
+        "prediction": float(pred),
+        "confidence_interval": {"lower": float(conf_low), "upper": float(conf_high)},
+        "based_on_date": str(last_row[datetime_column].date())
+    }
